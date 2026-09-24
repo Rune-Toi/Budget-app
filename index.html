@@ -89,7 +89,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .afford{display:flex;gap:8px;align-items:stretch}
 .money-in{position:relative;flex:1}
 .money-in span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:500}
-.money-in input{padding-left:24px}
+.money-in input[type=text]{padding-left:26px}
 input[type=text],input[type=number],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;min-height:44px}
 textarea{min-height:120px;font-size:.8rem}
 .afford select{width:auto;max-width:44%}
@@ -137,7 +137,9 @@ textarea{min-height:120px;font-size:.8rem}
 .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .seg button{flex:1;background:var(--bg);border:0;padding:10px;min-height:44px;cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--ctl);color:var(--ctl-ink);font-weight:600}
-.catedit{display:grid;grid-template-columns:1fr 104px auto auto;gap:6px;align-items:center;margin-bottom:6px}
+.catedit{display:grid;grid-template-columns:1fr 1fr 36px;grid-template-areas:"name name del" "amt fix .";gap:6px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.catedit:first-child{border-top:0;padding-top:0}
+.catedit>input{grid-area:name}.catedit>.money-in{grid-area:amt}.catedit>.fixbtn{grid-area:fix;width:100%}.catedit>.del{grid-area:del}
 .catedit input{min-height:40px;padding:8px 10px}
 .fixbtn{background:var(--bg);border:1px solid var(--line);border-radius:6px;min-height:40px;padding:0 10px;cursor:pointer;font-size:.85rem;white-space:nowrap}
 .fixbtn[aria-pressed=true]{background:var(--panel2);font-weight:600;border-color:var(--ink)}
@@ -163,13 +165,13 @@ nav.tabs button[aria-current=page]{color:var(--ink);border-top-color:var(--ctl);
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;display:none}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--panel);border-top:1px solid var(--line);
   border-radius:12px 12px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));max-height:92%;overflow:auto;
-  transform:translateY(105%);transition:transform .2s ease}
-.sheet.open{transform:none}
+  transform:translateY(105%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s}
+.sheet.open{transform:none;visibility:visible;transition:transform .2s ease}
 .scrim.open{display:block}
 .sheet .in{max-width:540px;margin:0 auto}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .sheet-head h2{margin:0;font-family:var(--cond);font-weight:600;font-size:1.2rem}
-.amt-in input{font-family:var(--cond);font-size:2rem;font-weight:600;min-height:60px;padding-left:30px}
+.amt-in input[type=text]{font-family:var(--cond);font-size:2rem;font-weight:600;min-height:60px;padding-left:32px}
 .amt-in span{font-size:1.4rem}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
 .chip{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 11px;cursor:pointer;font-size:.9rem;min-height:38px}
@@ -179,11 +181,23 @@ nav.tabs button[aria-current=page]{color:var(--ink);border-top-color:var(--ctl);
   padding:8px 14px;border-radius:6px;font-size:.9rem;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 [hidden]{display:none!important}
+#bgLayer{position:fixed;inset:0;z-index:-2;background-size:cover;background-repeat:no-repeat;background-position:center var(--bgpos,top);display:none}
+#bgDim{position:fixed;inset:0;z-index:-1;background:var(--bg);opacity:var(--bgdim,.35);display:none}
+body.has-bg{background:transparent}
+body.has-bg #bgLayer,body.has-bg #bgDim{display:block}
+body.has-bg .panel,body.has-bg .cell,body.has-bg .tx{background:color-mix(in srgb,var(--panel) 84%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+body.has-bg .grid{background:color-mix(in srgb,var(--line) 70%,transparent)}
+body.has-bg .top h1,body.has-bg .mlabel,body.has-bg .dayhead{background:color-mix(in srgb,var(--panel) 80%,transparent);padding:2px 8px;border-radius:5px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.bgprev{width:64px;height:96px;border-radius:6px;border:1px solid var(--line);background:var(--panel2) center/cover no-repeat;flex:none}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+label.btn{display:inline-flex;align-items:center;justify-content:center}
+input[type=range]{width:100%;accent-color:var(--ctl)}
 @media (prefers-reduced-motion:reduce){.sheet{transition:none}.toast{transition:none}}
-@media (max-width:380px){.catedit{grid-template-columns:1fr 88px auto auto}}
+
 </style>
 </head>
 <body>
+<div id="bgLayer"></div><div id="bgDim"></div>
 <div class="wrap">
   <header class="top">
     <h1>On Budget</h1>
@@ -266,6 +280,18 @@ nav.tabs button[aria-current=page]{color:var(--ink);border-top-color:var(--ctl);
     <div class="panel">
       <h2>Dashboard</h2>
       <div class="field"><label for="sInv">Invested assets</label><div class="money-in"><span>$</span><input type="text" inputmode="decimal" id="sInv"></div></div>
+      <div class="field"><label>Background image</label>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="bgprev" id="bgPrev" hidden></div>
+          <div class="btnrow"><input type="file" id="bgFile" accept="image/*" class="vh"><label for="bgFile" class="btn ghost">Choose image</label><button class="btn ghost" id="bgRemove" type="button" hidden>Remove</button></div>
+        </div>
+      </div>
+      <div id="bgOpts" hidden>
+        <div class="field"><label>Image position</label>
+          <div class="seg" role="group"><button type="button" data-bp="top">Top</button><button type="button" data-bp="center">Center</button><button type="button" data-bp="bottom">Bottom</button></div>
+        </div>
+        <div class="field"><label for="bgDimIn">Fade image <span id="bgDimVal"></span></label><input type="range" id="bgDimIn" min="0" max="85" step="5"></div>
+      </div>
       <div class="field" style="margin-bottom:0"><label>Theme</label>
         <div class="seg" role="group"><button type="button" data-th="auto">Auto</button><button type="button" data-th="light">Light</button><button type="button" data-th="dark">Dark</button></div>
       </div>
@@ -278,7 +304,7 @@ nav.tabs button[aria-current=page]{color:var(--ink);border-top-color:var(--ctl);
         <button class="btn ghost" id="expJson" type="button">Export backup (.json)</button>
         <button class="btn ghost" id="expCsv" type="button">Export transactions (.csv)</button>
       </div>
-      <div class="field" style="margin-top:12px"><label for="impFile">Restore a backup or import a CSV (date, amount, category, notes)</label><input type="file" id="impFile" accept=".json,.csv,text/csv,application/json"></div>
+      <div class="field" style="margin-top:12px"><label>Restore a backup or import a CSV (date, amount, category, notes)</label><input type="file" id="impFile" accept=".json,.csv,text/csv,application/json" class="vh"><label for="impFile" class="btn ghost">Choose file to import</label></div>
       <details><summary class="small muted" style="cursor:pointer">Or paste backup / CSV text</summary>
         <textarea id="impText" style="margin-top:8px" placeholder="Paste here"></textarea>
         <div class="btnrow" style="margin-top:8px"><button class="btn ghost" id="impPaste" type="button">Import pasted text</button><button class="btn ghost" id="showExport" type="button">Show backup text</button></div>
@@ -387,6 +413,37 @@ function calc(y,m){
   else status="ok";
   return {D,income,avgIncome,checks,tx,byCat,spent,remaining,safe,daily,daysLeft,elapsed,avgDaily,projected,
     fixedUnpaid,fixedBudget,flexBudget,flexSpent,budgetTotal,isCur,isPast,status};
+}
+
+/* ---------- background image ---------- */
+const BGKEY="onbudget.bg";
+let bgData=null;try{bgData=localStorage.getItem(BGKEY)}catch(e){}
+function applyBg(){
+  const st=S.settings;if(st.bgDim==null)st.bgDim=35;if(!st.bgPos)st.bgPos="top";
+  const r=document.documentElement.style;
+  r.setProperty("--bgdim",String(st.bgDim/100));r.setProperty("--bgpos",st.bgPos);
+  document.body.classList.toggle("has-bg",!!bgData);
+  $("bgLayer").style.backgroundImage=bgData?'url("'+bgData+'")':"none";
+  $("bgPrev").style.backgroundImage=bgData?'url("'+bgData+'")':"none";
+  $("bgRemove").hidden=!bgData;$("bgPrev").hidden=!bgData;$("bgOpts").hidden=!bgData;
+  $("bgDimIn").value=st.bgDim;$("bgDimVal").textContent=st.bgDim+"%";
+  document.querySelectorAll("[data-bp]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.bp===st.bgPos)));
+}
+function loadBg(file){
+  const url=URL.createObjectURL(file);const img=new Image();
+  img.onload=()=>{
+    const max=1600,k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement("canvas");c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    let out=c.toDataURL("image/jpeg",0.82);
+    try{localStorage.setItem(BGKEY,out)}catch(e){
+      out=c.toDataURL("image/jpeg",0.6);
+      try{localStorage.setItem(BGKEY,out)}catch(e2){toast("That image is too large to save — try a smaller one");return}
+    }
+    bgData=out;applyBg();toast("Background set");
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);toast("Couldn't open that image")};
+  img.src=url;
 }
 
 /* ---------- theme ---------- */
@@ -664,6 +721,11 @@ $("sRef").addEventListener("change",e=>{S.settings.paydayRef=e.target.value;save
 $("modeAvg").addEventListener("click",()=>{S.settings.incomeMode="avg";save();render()});
 $("modeAct").addEventListener("click",()=>{S.settings.incomeMode="act";save();render()});
 document.querySelectorAll("[data-th]").forEach(b=>b.addEventListener("click",()=>{S.settings.theme=b.dataset.th;save();applyTheme()}));
+$("bgFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(f)loadBg(f);e.target.value=""});
+$("bgRemove").addEventListener("click",()=>{try{localStorage.removeItem(BGKEY)}catch(e){}bgData=null;applyBg();toast("Background removed")});
+$("bgDimIn").addEventListener("input",e=>{S.settings.bgDim=+e.target.value;applyBg()});
+$("bgDimIn").addEventListener("change",()=>save());
+document.querySelectorAll("[data-bp]").forEach(b=>b.addEventListener("click",()=>{S.settings.bgPos=b.dataset.bp;save();applyBg()}));
 
 $("catEdit").addEventListener("change",e=>{const row=e.target.closest(".catedit");if(!row)return;const c=S.categories.find(c=>c.id===row.dataset.id);if(!c)return;
   const f=e.target.dataset.f;
@@ -683,12 +745,12 @@ $("expCsv").addEventListener("click",()=>offer("on-budget-transactions-"+iso(tod
 $("showExport").addEventListener("click",()=>{$("impText").value=JSON.stringify(S);$("impText").select()});
 $("impPaste").addEventListener("click",()=>importText($("impText").value));
 $("impFile").addEventListener("change",e=>{const f=e.target.files&&e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{importText(String(r.result));e.target.value=""};r.onerror=()=>toast("Couldn't read that file");r.readAsText(f)});
-$("reset").addEventListener("click",()=>{if(!confirm("Erase every transaction and setting? Export a backup first if you might want it."))return;S=defaults();save();toast("All data erased");render()});
+$("reset").addEventListener("click",()=>{if(!confirm("Erase every transaction and setting? Export a backup first if you might want it."))return;S=defaults();save();try{localStorage.removeItem(BGKEY)}catch(e){}bgData=null;applyBg();toast("All data erased");render()});
 
 /* roll over at midnight / on return */
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)render()});
 
-applyTheme();render();
+applyTheme();applyBg();render();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("./sw.js").catch(()=>{})})}
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 })();

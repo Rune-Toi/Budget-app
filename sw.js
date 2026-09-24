@@ -1,6 +1,6 @@
 // On Budget service worker: makes the app open with no connection.
 // Bump VERSION whenever you upload changed files so phones pick them up.
-const VERSION = "onbudget-v1";
+const VERSION = "onbudget-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
